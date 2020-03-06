@@ -1,119 +1,66 @@
-The files in this directory provide Xilinx PCIe DMA drivers, example software,
-and example test scripts that can be used to exercise the Xilinx PCIe DMA IP.
+此目录中的文件提供了 Xilinx PCIe DMA 驱动、示例软件,用于测试IP的示例测试脚本。
 
-This software can be used directly or referenced to create drivers and software
-for your Xilinx FPGA hardware design.
+本软件可以直接用来创建Xilinx FPGA硬件设计的驱动与软件。
 
-Directory and file description:
-===============================
- - xdma/: This directory contains the Xilinx PCIe DMA kernel module
-       driver files.
+目录和文件描述:
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+- xdma/:此目录包含Xilinx PCIe DMA内核模块驱动程序文件。
+- libxdma/:这个目录包含内核驱动程序模块的支持文件，接口对应XDMA IP。
+- include/:此目录包含编译驱动程序所需的所有包含文件。
+- tests/:这个目录提供内核模块驱动程序和Xilinx PCIe DMA IP示例应用程序软件。这个目录还包含以下脚本和目录。
+- load_driver.sh:
+这个脚本加载内核模块并创建软件使用内核节点必要的模块。设备节点创建在/dev/xdma*下。其他设备节点创建在/dev/xdma/card*下。
+- run_test.sh:
+此脚本在Xilinx PCIe DMA目标上运行示例测试返回一个pass(0)或fail(1)结果。
+此脚本用于PCIe DMA示例设计。
+- perform_hwcount.sh:
+这个脚本测试XDMA的硬件性能包括主机到卡(H2C)和卡到主机(C2H)模式。结果被复制到“hw_log_h2c.txt和hw_log_c2h.txt文本文件。
+对于每种模式，性能脚本从64字节开始翻倍到4mb。
+您可以在这两个文件上grep 'data rate'来查看数据率值。
+数据速率值以最大吞吐量的百分比表示。
+x8Gen3的最大数据速率是8Gbytes/s，因此对于x8Gen3 0.81数据速率的设计值为0.81*8 = 6.48Gbytes/s。
+x16Gen3的最大数据速率是16gb /s，因此对于x16Gen3 0.78数据率的设计值为0.78*16 = 12.48Gbytes/s。
+该程序可以运行在axim - mm实例设计上。axis - st设计为环回设计，包括H2C和C2H 。运行在axis - st示例设计上则不会生成正确的数字。
+如果axis-st设计独立于H2C和C2H，可以生成性能数字。
+-data/:
+此目录包含用于将DMA数据传输到Xilinx FPGA PCIe终端设备的二进制数据文件。
 
- - libxdma/: This directory contains support files for the kernel driver module,
-	which interfaces directly with the XDMA IP.
+用法:
+-将目录更改为驱动程序目录。
+cd xdma
+-编译和安装内核模块驱动程序。
+make install
+-将目录更改为工具目录。
+cd tools
+-编译提供的示例测试工具。
+make
+-加载内核模块驱动程序:
+a:modprobe xdma
+b:使用提供的脚本。
+cd tests
+./load_driver.sh
+-运行提供的测试脚本，以生成基本的DMA流。
+./ run_test.sh
+-检查驱动程序版本号
+modinfo xdma(或)
+modinfo ../ xdma/xdma.ko
+更新和向后兼容:
+-以下功能已添加到PCIe DMA IP和驱动程序的Vivado 2016.1。如果是PCIe DMA IP，更早的版本则不能使用这些特性。
+-轮询模式:早期版本的Vivado只支持中断模式，是驱动程序的默认行为。
+-源/目标地址:Vivado PCIe DMA IP的早期版本要求源地址和目标地址的低阶位相同。截至2011年1月，这一限制已被取消，源和目标地址可以是任何有效的任意地址。
 
- - include/: This directory contains all include files that are needed for
-	compiling driver.
+常见问题:
+问:如何卸载内核模块驱动程序?
+答:使用以下命令卸载驱动程序卸载内核模块。
+rmmod -s xdma
+问:如何修改内核模块驱动程序识别的PCIe设备id ?
+答:xdma/xdma_mod.c文件维护pci_device_id结构标志。PCIe设备的id是由驱动程序以下面格式识别:
+{PCI_DEVICE(0x10ee, 0x8038)，}，
+根据需要在这个结构中添加、删除或修改PCIe设备id。然后卸载现有的xdma内核模块，再次编译驱动程序，然后使用load_driver.sh脚本重新安装驱动程序。
+问:在默认情况下，当DMA传输时，驱动程序使用中断来发送信号完成。我如何修改驱动程序使用轮询而不是中断来确定DMA事务何时完成?
+答:驱动程序可以从中断驱动(默认)改为在插入内核模块时轮询驱动(轮询模式)。要做到这一点修改load_driver.sh文件如下:
+修改:insmod xdma / xdma.ko
+为:insmod xdma / xdma。ko poll_mode = 1
+注意:中断vs轮询模式将适用于所有的DMA通道。如果需要的驱动程序可以修改，这样一些通道是中断驱动的同时其他的则是轮询驱动的。请参阅PG195的轮询模式部分查询关于在轮询模式中使用PCIe DMA IP的更多信息。
 
- - tests/: This directory contains example application software to exercise the
-	provided kernel module driver and Xilinx PCIe DMA IP. This directory
-	also contains the following scripts and directories.
 
-	 - load_driver.sh:
-		This script loads the kernel module and creates the necissary
-		kernel nodes used by the provided software.
-		The The kernel device nodes will be created under /dev/xdma*.
-		Additional device nodes are created under /dev/xdma/card* to
-		more easily differentiate between multiple PCIe DMA enabled
-		cards. Root permissions will be required to run this script.
-
-	 - run_test.sh:
-		This script runs sample tests on a Xilinx PCIe DMA target and
-		returns a pass (0) or fail (1) result.
-		This script is intended for use with the PCIe DMA example
-		design.
-
-	 - perform_hwcount.sh:
-		This script runs hardware performance for XDMA for both Host to
-		Card (H2C) and Card to Host (C2H). The result are copied to
-		'hw_log_h2c.txt' and hw_log_c2h.txt' text files. 
-		For each direction the performance script loops from 64 bytes
-		to 4MBytes and generate performance numbers (byte size doubles
-		for each loop count).
-		You can grep for 'data rate' on those two files to see data
-		rate values.
-		Data rate values are in percentage of maximum throughput.
-		Maximum data rate for x8 Gen3 is 8Gbytes/s, so for a x8Gen3
-		design value of 0.81 data rate is 0.81*8 = 6.48Gbytes/s.
-		Maximum data rate for x16 Gen3 is 16Gbytes/s, so for a x16Gen3
-		design value of 0.78 data rate is 0.78*16 = 12.48Gbytes/s.
-		This program can be run on AXI-MM example design.
-		AXI-ST example design is a loopback design, both H2C and C2H
-		are connected. Running on AXI-ST example design will not
-		generate proper numbers.
-		If a AXI-ST design is independent of H2C and C2H, performance
-		number can be generated. 
-	- data/:
-		This directory contains binary data files that are used for DMA
-		data transfers to the Xilinx FPGA PCIe endpoint device.
-
-Usage:
-  - Change directory to the driver directory.
-        cd xdma
-  - Compile and install the kernel module driver.
-        make install
-  - Change directory to the tools directory.
-        cd tools
-  - Compile the provided example test tools.
-        make
-  - Load the kernel module driver:
-	a. modprobe xdma
-	b. using the provided script.
-		cd tests
-        	./load_driver.sh
-  - Run the provided test script to generate basic DMA traffic.
-        ./run_test.sh
-  - Check driver Version number
-        modinfo xdma (or)
-        modinfo ../xdma/xdma.ko    
-
-Updates and Backward Compaitiblity:
-  - The following features were added to the PCIe DMA IP and driver in Vivado
-    2016.1. These features cannot be used with PCIe DMA IP if the IP was
-    generated using a Vivado build earlier than 2016.1.
-      - Poll Mode: Earlier versions of Vivado only support interrupt mode which
-	is the default behavior of the driver.
-      - Source/Destination Address: Earlier versions of Vivado PCIe DMA IP
-	required the low-order bits of the Source and Destination address to be
-	the same.
-	As of 2016.1 this restriction has been removed and the Source and
-	Destination addresses can be any arbitrary address that is valid for
-        your system.
-
-Frequently asked questions:
-  Q: How do I uninstall the kernel module driver?
-  A: Use the following commands to uninstall the driver.
-       - Uninstall the kernel module.
-             rmmod -s xdma
-
-  Q: How do I modify the PCIe Device IDs recognized by the kernel module driver?
-  A: The xdma/xdma_mod.c file constains the pci_device_id struct that identifies
-     the PCIe Device IDs that are recognized by the driver in the following
-     format:
-         { PCI_DEVICE(0x10ee, 0x8038), },
-     Add, remove, or modify the PCIe Device IDs in this struct as desired. Then
-     uninstall the existing xdma kernel module, compile the driver again, and
-     re-install the driver using the load_driver.sh script.
-
-  Q: By default the driver uses interupts to signal when DMA transfers are
-     completed. How do I modify the driver to use polling rather than
-     interrupts to determine when DMA transactions are completed?
-  A: The driver can be changed from being interrupt driven (default) to being
-     polling driven (poll mode) when the kernel module is inserted. To do this
-     modify the load_driver.sh file as follows:
-        Change: insmod xdma/xdma.ko
-        To:     insmod xdma/xdma.ko poll_mode=1
-     Note: Interrupt vs Poll mode will apply to all DMA channels. If desired the
-     driver can be modified such that some channels are interrupt driven while
-     others are polling driven. Refer to the poll mode section of PG195 for
-     additional information on using the PCIe DMA IP in poll mode. 

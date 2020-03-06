@@ -4,7 +4,7 @@
 
 Xilinx PCI Express Multi Queue DMA (QDMA) IP 提供了高性能PCIE DMA. 本PCIe QDMA 可以应用于 UltraScale+ 设备。
 
-Both the linux kernel driver and the DPDK driver can be run on a PCI Express root port host PC to interact with the QDMA endpoint IP via PCI Express.
+Linux 驱动与 DPDK 驱动都可以运行在有 PCI Express root port 的PC主机上通过PCI Express 与 QDMA 终端 IP 设备交互。
 
 ### 起步文档
 
@@ -12,14 +12,14 @@ Both the linux kernel driver and the DPDK driver can be run on a PCI Express roo
 
 ## Xilinx-VSEC (XVSEC)
 
-Xilinx-VSEC (XVSEC) are Xilinx supported VSECs. The XVSEC Driver helps creating and deploying designs that may include the Xilinx VSEC PCIe Features.
+Xilinx-VSEC (XVSEC) 是 Xilinx 支持的 VSECs。 XVSEC 驱动为创建与部署带 Xilinx VSEC PCIe 特性的设计提供帮助。
 
-VSEC (Vendor Specific Extended Capability) is a feature of PCIe.
+VSEC (Vendor Specific Extended Capability) 是一种 PCIe 特性.
 
-The VSEC itself is implemented in the PCIe extended capability register in the FPGA hardware (as either soft or hard IP). The drivers and SW are created to interface with and use this hardware implemented feature.
+VSEC 本身在FPGA硬件的PCIe扩展功能寄存器中实现 (可能是软IP或硬IP). 此驱动与软件用于使用硬件实现特性与交互。
 
-The XVSEC driver currently include the MCAP VSEC, but will be expanded to include the XVC VSEC and NULL VSEC. Over time it will also include the Xilinx Versal implementation of the MCAP VSEC.
+XVSEC 驱动目前包含 MCAP VSEC, 但是将扩展包含 XVC VSEC 与 NULL VSEC. 之后也将包含 MCAP VSEC 的 Xilinx Versal实现.
 
 ### 起步文档
 
-* [XVSEC Linux Kernel Reference Driver User Guide](XVSEC/linux-kernel/docs/ug04-2000-0142_xvsec.pdf)
+* [XVSEC Linux 内核参考驱动用户指南](XVSEC/linux-kernel/docs/ug04-2000-0142_xvsec.pdf)
